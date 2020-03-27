@@ -12,8 +12,8 @@ help:
 
 ##@ Development
 
-build: ## Build the project
-	@src/cicd/build.sh
+test: ## Test the project
+	load-testing/runLoadtestRemotely.sh
 
 ##@ Releasing
 

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.github.BhuwanUpadhyay</groupId>
+    <artifactId>load-testing</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <gatling.version>2.3.1</gatling.version>
+        <gatling-plugin.version>2.2.4</gatling-plugin.version>
+        <gatling.skip>false</gatling.skip>
+        <!-- Information required to start EC2 instances and control them via SSH -->
+        <gatling.local.home>
+            ${project.basedir}/gatling/gatling-charts-highcharts-bundle-${gatling.version}/bin/gatling.sh
+        </gatling.local.home>
+        <gatling.install.script>${project.basedir}/src/test/resources/install-gatling.sh</gatling.install.script>
+        <gatling.root>gatling-charts-highcharts-bundle-${gatling.version}</gatling.root>
+        <gatling.java.opts>-Xms1g -Xmx4g</gatling.java.opts>
+        <!-- Fully qualified name of the Gatling simulation and a name describing
+            the test -->
+        <gatling.simulation>testing.LoadTestingSimulation</gatling.simulation>
+        <gatling.test.name>LoadTestingSimulation</gatling.test.name>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>2.11.8</version>
+        </dependency>
+        <dependency>
+            <groupId>io.gatling.highcharts</groupId>
+            <artifactId>gatling-charts-highcharts</artifactId>
+            <version>${gatling.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>src/test/scala</sourceDirectory>
+        <testSourceDirectory>src/test/scala</testSourceDirectory>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>load-testing</id>
+            <build>
+                <plugins>
+                    <!-- Required for running smaller Gatling simulations locally for debugging
+                        purposes -->
+                    <plugin>
+                        <groupId>io.gatling</groupId>
+                        <artifactId>gatling-maven-plugin</artifactId>
+                        <version>${gatling-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <dataFolder>src/test/resources/data</dataFolder>
+                            <resultsFolder>target/gatling/results</resultsFolder>
+                            <simulationsFolder>src/test/scala</simulationsFolder>
+                            <simulationClass>${gatling.simulation}</simulationClass>
+                            <jvmArgs>
+                                <!-- Enable this for debugging: -->
+                                <!--jvmArg>-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=7000</jvmArg -->
+                            </jvmArgs>
+                        </configuration>
+                    </plugin>
+                    <!-- Required for running large scale Gatling simulations on EC2 instances -->
+                    <plugin>
+                        <groupId>com.ea.gatling</groupId>
+                        <artifactId>gatling-aws-maven-plugin</artifactId>
+                        <version>1.0.14</version>
+                        <configuration>
+                            <simulationOptions>
+                                <custom.simulation.option>some value</custom.simulation.option>
+                            </simulationOptions>
+                        </configuration>
+                    </plugin>
+                    <!-- Any additional plugins you might have -->
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

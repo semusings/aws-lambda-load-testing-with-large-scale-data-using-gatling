@@ -1,0 +1,60 @@
+service:
+  name: order-apis
+
+custom:
+  region: ${opt:region, self:provider.region}
+  stage: ${opt:stage}
+  prefix: ${self:service}
+  dynamodb_table: ${self:custom.prefix}-order
+  dynamodb_arn: arn:aws:dynamodb:${self:custom.region}:*:table/${self:custom.dynamodb_table}
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  region: ${opt:region}
+  timeout: 30
+  iamRoleStatements:
+  - Effect: Allow
+    Action:
+    - dynamodb:Query
+    - dynamodb:Scan
+    - dynamodb:GetItem
+    - dynamodb:PutItem
+    - dynamodb:UpdateItem
+    - dynamodb:DeleteItem
+    - dynamodb:DescribeTable
+    Resource: ${self:custom.dynamodb_arn}
+  environment:
+    DYNAMO_TABLE: ${self:custom.dynamodb_table}
+
+package:
+  exclude:
+  - load-testing/**
+  - .idea/**
+  - .git/**
+  - tmp/**
+
+functions:
+  create-order:
+    handler: src/createOrder.handle
+    name: ${self:custom.prefix}-create-order
+    events:
+    - http:
+        path: orders
+        method: post
+
+resources:
+  Resources:
+    Order:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamodb_table}
+        AttributeDefinitions:
+        - AttributeName: orderId
+          AttributeType: S
+        KeySchema:
+        - AttributeName: orderId
+          KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
